@@ -158,6 +158,24 @@ class Score:
     def add(self, pts: int = 1):
         self.score += pts
 
+# 演習３爆発エフェクト
+class Explosion:
+    def __init__(self, bomb: Bomb):
+        # 爆弾の中心位置に爆発
+        self.imgs = [
+            pg.image.load("fig/explosion.gif"),
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), True, False)
+        ]
+        self.img = self.imgs[0]
+        self.rct = self.img.get_rect(center=bomb.rct.center)
+        self.life = 10  # 表示フレーム数
+
+    def update(self, screen: pg.Surface):
+        self.life -= 1
+        self.img = self.imgs[self.life % 2]  # 交互に切り替え
+        screen.blit(self.img, self.rct)
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -167,6 +185,7 @@ def main():
     beam = None  # ゲーム初期化時にはビームは存在しない
     beams = []
     score = Score()
+    explosions = []
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -194,10 +213,10 @@ def main():
                     continue
             if beam.rct.colliderect(bomb.rct):
                 score.add(1)
+                explosions.append(Explosion(bomb))  # 爆発エフェクト
                 beams.remove(beam)
                 bombs.remove(bomb)
                 break
-        
         
             # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
             for bomb in bombs:
@@ -206,6 +225,10 @@ def main():
                     pg.display.update()
                     time.sleep(1)
                     return
+                
+        for exp in explosions:
+            exp.update(screen)
+        explosions = [exp for exp in explosions if exp.life > 0]  # 生存時間が残っているものだけ
                 
         beams = [b for b in beams if check_bound(b.rct) == (True, True)]  # 画面外ビーム削除
         
